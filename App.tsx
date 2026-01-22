@@ -39,7 +39,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const App: React.FC = () => {
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const [user, setUser] = useState<User>(() => {
-    const saved = localStorage.getItem(USER_KEY);
+    const saved = sessionStorage.getItem(USER_KEY);
     return saved ? JSON.parse(saved) : { id: '', name: '', email: '', isAuthenticated: false };
   });
 
@@ -94,7 +94,7 @@ const App: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
   }, [user]);
 
   useEffect(() => {
@@ -267,6 +267,7 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setUser({ id: '', name: '', email: '', isAuthenticated: false });
+    sessionStorage.removeItem(USER_KEY);
   };
 
 
