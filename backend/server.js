@@ -327,8 +327,12 @@ app.post('/api/webhook/message', async (req, res) => {
         console.log('[Webhook] Message saved:', message.id);
 
         // --- AI AUTO-REPLY LOGIC ---
-        // Only reply if message is from USER (not from me/bot) and status is active
-        if (!message.fromMe && conversation.status === 'active') {
+        // 1. Fetch Global AI Config
+        const aiSetting = await prisma.systemSetting.findUnique({ where: { key: 'zapai_ai_config' } });
+        const aiConfig = aiSetting ? JSON.parse(aiSetting.value) : { enabled: true };
+
+        // 2. Only reply if message is from USER (not from me/bot), status is active AND global agent is enabled
+        if (!message.fromMe && conversation.status === 'active' && aiConfig.enabled !== false) {
             // ... existing AI logic ...
             // (Logic continues below, verifying context bounds)
             console.log('🤖 Triggering AI for conversation:', conversation.phone);

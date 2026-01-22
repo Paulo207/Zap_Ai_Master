@@ -57,6 +57,7 @@ export interface KnowledgeBaseItem {
 }
 
 export interface AIConfig {
+  enabled: boolean;
   systemPrompt: string;
   companyName?: string;
   adminPhone?: string; // New field for notifications

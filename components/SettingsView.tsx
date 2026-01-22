@@ -229,9 +229,28 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           <h2 className="text-2xl font-bold text-gray-800">Centro de Treinamento e IA</h2>
           <p className="text-gray-500">Gerencie a conexão do canal e a inteligência do seu agente.</p>
         </div>
-        <div className={`px-4 py-2 rounded-full text-xs font-bold uppercase flex items-center gap-2 border ${isConnected ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
-          {isConnected ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
-          {isConnected ? 'WhatsApp Conectado' : 'Canal Desconectado'}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+            <div className={`p-2 rounded-lg ${tempAi.enabled ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+              <Bot size={20} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold uppercase text-gray-400">Status do Agente</span>
+              <button
+                onClick={() => setTempAi({ ...tempAi, enabled: !tempAi.enabled })}
+                className={`text-xs font-bold ${tempAi.enabled ? 'text-green-600' : 'text-red-500'} flex items-center gap-1`}
+              >
+                {tempAi.enabled ? 'Ativado' : 'Desativado'}
+                <div className={`w-8 h-4 rounded-full relative transition-colors ${tempAi.enabled ? 'bg-green-500' : 'bg-gray-300'}`}>
+                  <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${tempAi.enabled ? 'right-0.5' : 'left-0.5'}`}></div>
+                </div>
+              </button>
+            </div>
+          </div>
+          <div className={`px-4 py-2 rounded-full text-xs font-bold uppercase flex items-center gap-2 border ${isConnected ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+            {isConnected ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+            {isConnected ? 'WhatsApp Conectado' : 'Canal Desconectado'}
+          </div>
         </div>
       </header>
 

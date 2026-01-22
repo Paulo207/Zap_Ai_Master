@@ -70,6 +70,7 @@ const App: React.FC = () => {
   const [aiConfig, setAiConfig] = useState<AIConfig>(() => {
     const saved = localStorage.getItem(AI_CONFIG_KEY);
     return saved ? JSON.parse(saved) : {
+      enabled: true,
       systemPrompt: 'A ZapAI é uma loja de tecnologia premium. Vendemos smartphones, acessórios e serviços de automação.',
       temperature: 0.8,
       tone: 'Persuasivo e Profissional',
