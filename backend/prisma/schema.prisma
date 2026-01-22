@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Conversation {
+  id        String    @id @default(uuid())
+  phone     String    @unique // The user's phone number
+  name      String?   // User's display name
+  status    String    @default("active") // active, closed
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  content        String
+  fromMe         Boolean      // true if sent by bot, false if from user
+  type           String       @default("text") // text, image, audio
+  timestamp      DateTime     @default(now())
+}
+
+model SystemSetting {
+  key   String @id
+  value String // JSON content
+  updatedAt DateTime @updatedAt
+}
+
+model Contact {
+  id            String   @id @default(uuid())
+  phone         String   @unique
+  name          String?
+  profilePicUrl String?
+  email         String?
+  tags          String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Appointment {
+  id        String   @id @default(uuid())
+  phone     String
+  client    String
+  service   String
+  date      String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

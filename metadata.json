@@ -1,0 +1,5 @@
+{
+  "name": "ZapAI Master Admin",
+  "description": "A mobile-first administrative dashboard to manage WhatsApp automation via UltraMsg and Gemini AI, featuring real-time chat monitoring and human-fallback controls.",
+  "requestFramePermissions": []
+}
