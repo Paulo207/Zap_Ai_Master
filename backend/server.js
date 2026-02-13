@@ -397,11 +397,21 @@ app.post('/api/webhook/message', async (req, res) => {
 
     } catch (error) {
         console.error('Error processing webhook:', error);
-        res.status(500).json({ error: 'Failed to process webhook' });
     }
 });
-// ...
-// ...
+
+// Get All Contacts
+app.get('/api/contacts', async (req, res) => {
+    try {
+        const contacts = await prisma.contact.findMany({
+            orderBy: { name: 'asc' }
+        });
+        res.json(contacts);
+    } catch (error) {
+        console.error('Error fetching contacts:', error);
+        res.status(500).json({ error: 'Failed to fetch contacts' });
+    }
+});
 
 // Sync Contacts (Provider -> DB)
 app.post('/api/contacts/sync', async (req, res) => {
@@ -545,48 +555,66 @@ app.get('/api/qr', async (req, res) => {
         const qrData = await provider.getQrCode();
 
         if (!qrData) {
+            console.error('[QR] Provider returned null/undefined');
             return res.status(404).json({ error: 'QR Code not available' });
         }
 
         // Handle Status Message (e.g. "Already Connected")
         if (typeof qrData === 'object' && qrData.status === 'connected') {
+            console.log('[QR] Device already connected');
             return res.json({ status: 'connected', message: qrData.message });
         }
 
         // Handle Buffer (Direct Image)
         if (Buffer.isBuffer(qrData)) {
+            console.log('[QR] Sending buffer image');
             res.setHeader('Content-Type', 'image/png');
-            res.send(qrData);
+            res.setHeader('Content-Length', qrData.length);
+            return res.send(qrData);
         }
-        // Handle URL (Fetch and Pipe)
+
+        // Handle URL (Fetch and Send Buffer)
         else if (typeof qrData === 'string' && qrData.startsWith('http')) {
+            console.log('[QR] Fetching image from URL:', qrData);
             const response = await fetch(qrData);
-            if (!response.ok) throw new Error('Failed to fetch QR image from provider');
-            res.setHeader('Content-Type', 'image/png'); // Assuming PNG
-            response.body.pipe(res);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch QR image: ${response.status} ${response.statusText}`);
+            }
+
+            // Get the buffer from the response
+            const buffer = await response.buffer();
+            res.setHeader('Content-Type', 'image/png');
+            res.setHeader('Content-Length', buffer.length);
+            return res.send(buffer);
         }
+
         // Handle Base64
         else if (typeof qrData === 'string' && qrData.startsWith('data:')) {
+            console.log('[QR] Processing base64 image');
             const matches = qrData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
             if (matches && matches.length === 3) {
                 const type = matches[1];
                 const buffer = Buffer.from(matches[2], 'base64');
                 res.setHeader('Content-Type', type);
-                res.send(buffer);
+                res.setHeader('Content-Length', buffer.length);
+                return res.send(buffer);
             } else {
-                res.status(500).json({ error: 'Invalid base64 QR' });
+                console.error('[QR] Invalid base64 format');
+                return res.status(500).json({ error: 'Invalid base64 QR' });
             }
         }
         else {
-            // Fallback: return as JSON if unknow format? Or text?
-            // If zapi returns just the URL string but not keeping it hidden?
-            // Actually, piping strictly is better.
-            res.status(500).json({ error: 'Unknown QR format', data: qrData });
+            console.error('[QR] Unknown QR format:', typeof qrData);
+            return res.status(500).json({ error: 'Unknown QR format', dataType: typeof qrData });
         }
 
     } catch (error) {
-        console.error('Error fetching QR:', error);
-        res.status(500).json({ error: 'Failed to fetch QR' });
+        console.error('[QR] Error fetching QR:', error.message);
+        return res.status(500).json({
+            error: 'Failed to fetch QR code',
+            details: error.message
+        });
     }
 });
 

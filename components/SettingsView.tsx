@@ -68,71 +68,85 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [countdown, setCountdown] = useState<number | null>(null);
 
   const handleGenerateQr = async () => {
-    setLoadingQr(true);
-    setCountdown(null);
+    try {
+      setLoadingQr(true);
+      setCountdown(null);
 
-    if (forceNewSession) {
-      // ... existing force logic (short wait)
-      try {
-        console.log("Forcing logout before QR generation...");
-        await logoutDevice(waConfig);
-        await new Promise(r => setTimeout(r, 2000));
-      } catch (e) { }
-    } else {
-      // ... existing check status logic
-      try {
-        const status: any = await checkDeviceStatus(waConfig);
-        if (status.rawStatus) setLastRawStatus(status.rawStatus);
-        if (status.status === 'connected') {
-          onSetConnected(true);
-          alert('Dispositivo já está conectado e pronto!');
-          setLoadingQr(false);
-          return;
+      if (forceNewSession) {
+        // ... existing force logic (short wait)
+        try {
+          console.log("Forcing logout before QR generation...");
+          await logoutDevice(waConfig);
+          await new Promise(r => setTimeout(r, 2000));
+        } catch (e) {
+          console.error("Logout failed:", e);
         }
-      } catch (e) { console.error("Status check failed", e); }
-    }
-
-    // 2. Try to get QR Code
-    let url = await getQRCode(waConfig);
-
-    // 3. Fallback logic with Countdown
-    if (!url) {
-      try {
-        console.log("QR Code generation failed. Attempting force-restart...");
-        setForcingLogout(true);
-        await restartInstance(waConfig);
-
-        // Countdown Loop (15 seconds)
-        for (let i = 15; i > 0; i--) {
-          setCountdown(i);
-          await new Promise(r => setTimeout(r, 1000));
+      } else {
+        // ... existing check status logic
+        try {
+          const status: any = await checkDeviceStatus(waConfig);
+          if (status.rawStatus) setLastRawStatus(status.rawStatus);
+          if (status.status === 'connected') {
+            onSetConnected(true);
+            alert('Dispositivo já está conectado e pronto!');
+            setLoadingQr(false);
+            return;
+          }
+        } catch (e) {
+          console.error("Status check failed", e);
         }
-        setCountdown(null);
-
-        url = await getQRCode(waConfig);
-        setForcingLogout(false);
-      } catch (err) {
-        setForcingLogout(false);
-        setCountdown(null);
       }
-    }
 
-    if (!url) {
-      alert('Não foi possível gerar o QR Code.');
+      // 2. Try to get QR Code
+      let url = await getQRCode(waConfig);
+
+      // 3. Fallback logic with Countdown
+      if (!url) {
+        try {
+          console.log("QR Code generation failed. Attempting force-restart...");
+          setForcingLogout(true);
+          await restartInstance(waConfig);
+
+          // Countdown Loop (15 seconds)
+          for (let i = 15; i > 0; i--) {
+            setCountdown(i);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+          setCountdown(null);
+
+          url = await getQRCode(waConfig);
+          setForcingLogout(false);
+        } catch (err) {
+          console.error("Restart failed:", err);
+          setForcingLogout(false);
+          setCountdown(null);
+        }
+      }
+
+      if (!url) {
+        alert('Não foi possível gerar o QR Code. Verifique se o backend está rodando e se as credenciais estão corretas.');
+        setLoadingQr(false);
+        return;
+      }
+
+      if (url === "CONNECTED") {
+        onSetConnected(true);
+        alert('Dispositivo já está conectado e pronto!');
+        setLoadingQr(false);
+        return;
+      }
+
+      setQrUrl(url);
+      setShowQr(true);
       setLoadingQr(false);
-      return;
-    }
 
-    if (url === "CONNECTED") {
-      onSetConnected(true);
-      alert('Dispositivo já está conectado e pronto!');
+    } catch (error) {
+      console.error("Critical error in handleGenerateQr:", error);
+      alert('Erro ao gerar QR Code. Por favor, tente novamente ou verifique o console para mais detalhes.');
       setLoadingQr(false);
-      return;
+      setForcingLogout(false);
+      setCountdown(null);
     }
-
-    setQrUrl(url);
-    setShowQr(true);
-    setLoadingQr(false);
   };
 
   const handleForceLogout = async () => {

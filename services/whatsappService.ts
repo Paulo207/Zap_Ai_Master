@@ -32,26 +32,64 @@ export const checkDeviceStatus = async (config: WhatsAppConfig) => {
 // 2. Get QR Code
 export const getQRCode = async (config: WhatsAppConfig): Promise<string> => {
   try {
-    const response = await fetch(`${API_URL}/qr`);
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+    const response = await fetch(`${API_URL}/qr`, {
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.error("Failed to get QR code");
+      console.error(`Failed to get QR code: ${response.status} ${response.statusText}`);
+
+      // Try to get error details
+      try {
+        const errorData = await response.json();
+        console.error("QR Error details:", errorData);
+      } catch (e) {
+        // Ignore JSON parse errors
+      }
+
       return "";
     }
 
     const contentType = response.headers.get('content-type');
+
+    // Handle JSON response (connected status or error)
     if (contentType && contentType.includes('application/json')) {
       const data = await response.json();
       if (data.status === 'connected') {
         return "CONNECTED"; // Sentinel value
       }
+      console.error("Unexpected JSON response:", data);
       return "";
     }
 
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
-  } catch (error) {
-    console.error("Error getting QR code:", error);
+    // Handle image response
+    if (contentType && contentType.includes('image')) {
+      const blob = await response.blob();
+
+      // Validate blob
+      if (!blob || blob.size === 0) {
+        console.error("Received empty image blob");
+        return "";
+      }
+
+      return URL.createObjectURL(blob);
+    }
+
+    console.error("Unexpected content type:", contentType);
+    return "";
+
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.error("QR code request timed out");
+    } else {
+      console.error("Error getting QR code:", error);
+    }
     return "";
   }
 };

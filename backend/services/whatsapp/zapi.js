@@ -43,15 +43,31 @@ export class ZAPIProvider {
     }
 
     async getQrCode() {
-        // Z-API returns QR as image/png usually, or base64 in a specific endpoint
         const headers = {};
         if (this.clientToken) headers['Client-Token'] = this.clientToken;
 
-        const response = await fetch(`${this.baseUrl}/qr-code/image`, { headers });
-        if (!response.ok) return null;
-        // This is simplified; usually we might need the base64 endpoint or handle the buffer
-        // For Z-API, correct endpoint for base64 is /qr-code
-        return `${this.baseUrl}/qr-code/image`;
+        try {
+            // First check if already connected
+            const status = await this.checkConnection();
+            if (status.connected) {
+                return { status: 'connected', message: 'Device already connected' };
+            }
+
+            // Try to get QR code image
+            const response = await fetch(`${this.baseUrl}/qr-code/image`, { headers });
+
+            if (!response.ok) {
+                console.error(`Z-API QR Code Error: ${response.status} ${response.statusText}`);
+                return null;
+            }
+
+            // Get the image as a buffer
+            const buffer = await response.buffer();
+            return buffer;
+        } catch (error) {
+            console.error('Error fetching QR code from Z-API:', error);
+            return null;
+        }
     }
 
     async getContacts() {

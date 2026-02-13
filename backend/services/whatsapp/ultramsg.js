@@ -63,7 +63,16 @@ export class UltraMsgProvider {
             }
 
             // If not image, it's likely JSON error or notice
-            const data = await response.json();
+            const text = await response.text();
+            console.log(`[UltraMsg] Non-image QR response: ${text}`);
+
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error("[UltraMsg] Failed to parse JSON response:", text);
+                return null;
+            }
 
             if (data.error && data.error.includes('status is not equal "qr"')) {
                 return { status: 'connected', message: 'Instance already connected' };

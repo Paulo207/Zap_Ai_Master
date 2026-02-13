@@ -29,12 +29,12 @@ export const getWhatsAppProvider = async () => {
             console.log(`🔄 Switching WhatsApp Provider to: ${config.provider}`);
             lastConfigHash = currentHash;
 
-            if (config.provider === 'zapi') {
+            if (config.provider === 'zapi' || config.provider === 'official') {
                 cachedProvider = new ZAPIProvider(config);
             } else if (config.provider === 'ultramsg') {
                 cachedProvider = new UltraMsgProvider(config);
             } else {
-                console.warn(`Unknown provider ${config.provider}, investigating if it should be Z-API...`);
+                console.warn(`Unknown provider ${config.provider}, falling back to env.`);
             }
 
             if (cachedProvider) return cachedProvider;
