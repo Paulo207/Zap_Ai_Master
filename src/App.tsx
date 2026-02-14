@@ -26,6 +26,7 @@ import SettingsView from './components/SettingsView';
 import AgendaView from './components/AgendaView';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfUse from './components/TermsOfUse';
+import { API_URL } from './config';
 
 const ESCALATION_THRESHOLD = 3;
 const WA_CONFIG_KEY = 'zapai_wa_config';
@@ -33,8 +34,7 @@ const AI_CONFIG_KEY = 'zapai_ai_config';
 const USER_KEY = 'zapai_user';
 const WA_CONNECTED_KEY = 'zapai_wa_connected';
 
-// Backend URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// Backend URL logic moved to config.ts
 
 const App: React.FC = () => {
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
