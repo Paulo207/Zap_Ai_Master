@@ -4,8 +4,12 @@ import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import { generateAIResponse } from './services/aiService.js';
-import { getWhatsAppProvider } from './services/whatsapp/index.js';
-import fetch from 'node-fetch';
+import { getWhatsAppProvider } from './services/whatsapp/index.js'; import fetch from 'node-fetch';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -671,6 +675,15 @@ app.get('/api/logout', async (req, res) => {
         console.error('Logout failed:', error);
         res.status(500).json({ error: 'Failed to logout instance' });
     }
+});
+
+// Serve static files from the frontend build
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
+
+// Catch-all route for SPA
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
 });
 
 app.listen(PORT, () => {
