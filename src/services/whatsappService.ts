@@ -57,12 +57,19 @@ export const getQRCode = async (config: WhatsAppConfig): Promise<string> => {
 
     const contentType = response.headers.get('content-type');
 
-    // Handle JSON response (connected status or error)
+    // Handle JSON response (connected status or base64 QR)
     if (contentType && contentType.includes('application/json')) {
       const data = await response.json();
       if (data.status === 'connected') {
         return "CONNECTED"; // Sentinel value
       }
+
+      // Handle base64 QR code if present in JSON (common in some clones)
+      if (data.value && typeof data.value === 'string') {
+        if (data.value.startsWith('data:image')) return data.value;
+        return `data:image/png;base64,${data.value}`;
+      }
+
       console.error("Unexpected JSON response:", data);
       return "";
     }

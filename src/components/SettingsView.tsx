@@ -85,7 +85,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         // ... existing check status logic
         try {
           const status: any = await checkDeviceStatus(waConfig);
-          if (status.rawStatus) setLastRawStatus(status.rawStatus);
+          if (status.rawStatus) {
+            const displayStatus = typeof status.rawStatus === 'string'
+              ? status.rawStatus
+              : JSON.stringify(status.rawStatus);
+            setLastRawStatus(displayStatus);
+          }
           if (status.status === 'connected') {
             onSetConnected(true);
             alert('Dispositivo já está conectado e pronto!');

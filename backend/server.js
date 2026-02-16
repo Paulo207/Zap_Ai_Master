@@ -613,7 +613,8 @@ app.get('/api/qr', async (req, res) => {
             }
 
             // Get the buffer from the response
-            const buffer = await response.buffer();
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
             res.setHeader('Content-Type', 'image/png');
             res.setHeader('Content-Length', buffer.length);
             return res.send(buffer);

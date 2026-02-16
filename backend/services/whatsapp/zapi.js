@@ -61,25 +61,26 @@ export class ZAPIProvider {
     async getQrCode() {
         const headers = {};
         if (this.clientToken) headers['Client-Token'] = this.clientToken;
+        if (this.isSelfHosted) headers['Access-Token'] = this.token;
 
         try {
-            // First check if already connected
             const status = await this.checkConnection();
             if (status.connected) {
                 return { status: 'connected', message: 'Device already connected' };
             }
 
-            // Try to get QR code image
-            const response = await fetch(`${this.baseUrl}/qr-code/image`, { headers });
+            // For self-hosted, we try /qr-code first. For official, /qr-code/image
+            const endpoint = this.isSelfHosted ? '/qr-code' : '/qr-code/image';
+            const response = await fetch(`${this.baseUrl}${endpoint}`, { headers });
 
             if (!response.ok) {
                 console.error(`Z-API QR Code Error: ${response.status} ${response.statusText}`);
                 return null;
             }
 
-            // Get the image as a buffer
-            const buffer = await response.buffer();
-            return buffer;
+            // node-fetch 3.x doesn't have .buffer(), use arrayBuffer()
+            const arrayBuffer = await response.arrayBuffer();
+            return Buffer.from(arrayBuffer);
         } catch (error) {
             console.error('Error fetching QR code from Z-API:', error);
             return null;
@@ -89,6 +90,7 @@ export class ZAPIProvider {
     async getContacts() {
         const headers = {};
         if (this.clientToken) headers['Client-Token'] = this.clientToken;
+        if (this.isSelfHosted) headers['Access-Token'] = this.token;
 
         try {
             const response = await fetch(`${this.baseUrl}/contacts`, { headers });
@@ -103,25 +105,34 @@ export class ZAPIProvider {
     async restart() {
         const headers = {};
         if (this.clientToken) headers['Client-Token'] = this.clientToken;
-        await fetch(`${this.baseUrl}/restart`, { headers });
+        if (this.isSelfHosted) headers['Access-Token'] = this.token;
+
+        await fetch(`${this.baseUrl}/restart`, { method: 'POST', headers });
         return true;
     }
 
     async logout() {
         const headers = {};
         if (this.clientToken) headers['Client-Token'] = this.clientToken;
-        await fetch(`${this.baseUrl}/disconnect`, { headers });
+        if (this.isSelfHosted) headers['Access-Token'] = this.token;
+
+        const endpoint = this.isSelfHosted ? '/logout' : '/disconnect';
+        await fetch(`${this.baseUrl}${endpoint}`, { method: 'POST', headers });
         return true;
     }
+
     async updateWebhook(url) {
         const headers = { 'Content-Type': 'application/json' };
         if (this.clientToken) headers['Client-Token'] = this.clientToken;
+        if (this.isSelfHosted) headers['Access-Token'] = this.token;
 
         console.log(`[Z-API] Updating webhook to: ${url}`);
-        // Common Z-API Endpoint for Webhook
         try {
-            const response = await fetch(`${this.baseUrl}/update-webhook-delivery`, {
-                method: 'PUT',
+            const endpoint = this.isSelfHosted ? '/update-webhook' : '/update-webhook-delivery';
+            const method = this.isSelfHosted ? 'POST' : 'PUT';
+
+            const response = await fetch(`${this.baseUrl}${endpoint}`, {
+                method,
                 headers,
                 body: JSON.stringify({
                     value: url,
