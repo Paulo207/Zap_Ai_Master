@@ -7,9 +7,10 @@ import { jwtDecode } from 'jwt-decode';
 
 interface LoginProps {
   onLogin: (user: Partial<User>) => void;
+  googleEnabled?: boolean;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, googleEnabled = true }) => {
   const [email, setEmail] = useState('admin@zapai.com');
   const [password, setPassword] = useState('password');
   const [isLoading, setIsLoading] = useState(false);
@@ -79,19 +80,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         <div className="space-y-6">
           {/* Botão Google - UI Aprimorada */}
-          <div className="w-full flex justify-center pb-2">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              auto_select={false}
-              theme="filled_blue"
-              size="large"
-              shape="pill"
-              text="signin_with"
-              width="320"
-
-            />
-          </div>
+          {googleEnabled && (
+            <div className="w-full flex justify-center pb-2">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                auto_select={false}
+                theme="filled_blue"
+                size="large"
+                shape="pill"
+                text="signin_with"
+                width="320"
+              />
+            </div>
+          )}
 
           <div className="flex items-center gap-4 py-2">
             <div className="flex-1 h-px bg-slate-100"></div>
