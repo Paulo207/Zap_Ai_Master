@@ -711,14 +711,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Modal QR Code (Visual Refined) */}
       {showQr && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div translate="no" className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-[40px] p-10 max-w-sm w-full text-center space-y-8 animate-in zoom-in-95 duration-300 shadow-2xl border border-gray-100">
             <div>
               <h3 className="text-2xl font-bold text-gray-900">Vincular WhatsApp</h3>
               <p className="text-xs text-gray-500 mt-2">Abra o WhatsApp no seu celular &gt; Configurações &gt; Dispositivos Conectados e aponte para o código.</p>
             </div>
             <div className="bg-white p-6 border-2 border-dashed border-gray-100 rounded-[32px] inline-block shadow-inner">
-              <img src={qrUrl} alt="QR" className="w-56 h-56 rounded-xl" />
+              <img key={qrUrl} src={qrUrl} alt="QR" className="w-56 h-56 rounded-xl" />
             </div>
             <div className="flex flex-col gap-3">
               <button
