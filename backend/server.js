@@ -64,22 +64,30 @@ app.get('/api/conversations', async (req, res) => {
     }
 });
 
-// Update conversation status (active/human)
-app.patch('/api/conversations/:phone/status', async (req, res) => {
+// Update conversation status (active/human) - Support both PATCH and POST for compatibility
+const handleStatusUpdate = async (req, res) => {
     const { phone } = req.params;
     const { status } = req.body;
 
     try {
-        const conversation = await prisma.conversation.update({
+        const conversation = await prisma.conversation.upsert({
             where: { phone },
-            data: { status }
+            update: { status },
+            create: {
+                phone,
+                status,
+                name: phone // Default name if creating
+            }
         });
         res.json(conversation);
     } catch (error) {
         console.error('Error updating status:', error);
-        res.status(500).json({ error: 'Failed to update status' });
+        res.status(500).json({ error: 'Failed to update status', details: error.message });
     }
-});
+};
+
+app.patch('/api/conversations/:phone/status', handleStatusUpdate);
+app.post('/api/conversations/:phone/status', handleStatusUpdate);
 
 // --- SETTINGS API ---
 app.get('/api/settings/:key', async (req, res) => {

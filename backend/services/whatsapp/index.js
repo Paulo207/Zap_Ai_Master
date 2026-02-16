@@ -57,7 +57,8 @@ export const getWhatsAppProvider = async () => {
             cachedProvider = new ZAPIProvider({
                 instanceId: process.env.ZAPI_INSTANCE_ID || process.env.VITE_ZAPI_INSTANCE_ID,
                 token: process.env.ZAPI_TOKEN || process.env.VITE_ZAPI_TOKEN,
-                clientToken: process.env.ZAPI_CLIENT_TOKEN || process.env.VITE_ZAPI_CLIENT_TOKEN
+                clientToken: process.env.ZAPI_CLIENT_TOKEN || process.env.VITE_ZAPI_CLIENT_TOKEN,
+                apiHost: process.env.WHATSAPP_API_HOST
             });
         }
     }

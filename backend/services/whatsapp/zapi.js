@@ -6,21 +6,36 @@ export class ZAPIProvider {
         this.instanceId = config.instanceId;
         this.token = config.token;
         this.clientToken = config.clientToken;
-        this.baseUrl = `https://api.z-api.io/instances/${this.instanceId}/token/${this.token}`;
+
+        const host = config.apiHost || 'https://api.z-api.io';
+        if (host.includes('z-api.io')) {
+            this.baseUrl = `${host}/instances/${this.instanceId}/token/${this.token}`;
+            this.isSelfHosted = false;
+        } else {
+            // Self-hosted (ConnectFlow) style URL
+            this.baseUrl = `${host}/api/instances/${this.instanceId}`;
+            this.isSelfHosted = true;
+        }
     }
 
     async sendMessage(phone, message) {
         const headers = { 'Content-Type': 'application/json' };
         if (this.clientToken) headers['Client-Token'] = this.clientToken;
+        // In self-hosted, the Token might be needed in the headers
+        if (this.isSelfHosted) headers['Access-Token'] = this.token;
 
-        const response = await fetch(`${this.baseUrl}/send-text`, {
+        const endpoint = this.isSelfHosted ? '/messages/chat' : '/send-text';
+        const url = `${this.baseUrl}${endpoint}`;
+
+        const response = await fetch(url, {
             method: 'POST',
             headers,
             body: JSON.stringify({ phone, message })
         });
 
         if (!response.ok) {
-            throw new Error(`Z-API Error: ${response.statusText}`);
+            const errBody = await response.text();
+            throw new Error(`Z-API Error (${response.status}): ${errBody || response.statusText}`);
         }
         return await response.json();
     }
@@ -28,13 +43,14 @@ export class ZAPIProvider {
     async checkConnection() {
         const headers = {};
         if (this.clientToken) headers['Client-Token'] = this.clientToken;
+        if (this.isSelfHosted) headers['Access-Token'] = this.token;
 
         try {
             const response = await fetch(`${this.baseUrl}/status`, { headers });
             const data = await response.json();
             return {
-                connected: data.connected,
-                status: data.connected ? 'connected' : 'disconnected',
+                connected: data.connected || data.status === 'connected',
+                status: (data.connected || data.status === 'connected') ? 'connected' : 'disconnected',
                 raw: data
             };
         } catch (error) {
