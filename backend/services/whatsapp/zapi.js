@@ -12,8 +12,10 @@ export class ZAPIProvider {
             this.baseUrl = `${host}/instances/${this.instanceId}/token/${this.token}`;
             this.isSelfHosted = false;
         } else {
-            // Self-hosted (ConnectFlow) style URL
-            this.baseUrl = `${host}/api/instances/${this.instanceId}`;
+            // Self-hosted (ConnectFlow) usually follows Z-API path structure
+            const cleanHost = host.replace(/\/$/, '');
+            const base = cleanHost.includes('/api') ? cleanHost : `${cleanHost}/api`;
+            this.baseUrl = `${base}/instances/${this.instanceId}/token/${this.token}`;
             this.isSelfHosted = true;
         }
     }
@@ -75,6 +77,19 @@ export class ZAPIProvider {
 
             if (!response.ok) {
                 console.error(`Z-API QR Code Error: ${response.status} ${response.statusText}`);
+                return null;
+            }
+
+            const contentType = response.headers.get('content-type') || '';
+
+            if (contentType.includes('application/json')) {
+                const data = await response.json();
+                // ConnectFlow and similar clones often return { value: "base64..." } or { base64: "..." }
+                const b64 = data.value || data.base64 || data.qr;
+                if (b64 && typeof b64 === 'string') {
+                    return b64.startsWith('data:image') ? b64 : `data:image/png;base64,${b64}`;
+                }
+                console.error('[Z-API] JSON response without QR data:', data);
                 return null;
             }
 
